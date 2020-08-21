@@ -1,5 +1,6 @@
 """
- python-pacman - (c) Jacob Cook 2015
+ python-yay - (c) Matt Spurrier (2020)
+ based on python-pacman by Jacob Cook (2015)
  Licensed under GPLv3
 """
 
@@ -9,14 +10,14 @@ from shlex import quote
 
 def install(packages, needed=True):
     # Install package(s)
-    s = pacman("-S", packages, ["--needed" if needed else None])
+    s = yay("-S", packages, ["--needed" if needed else None])
     if s["code"] != 0:
         raise Exception("Failed to install: {0}".format(s["stderr"]))
 
 
 def refresh():
     # Refresh the local package information database
-    s = pacman("-Sy")
+    s = yay("-Sy")
     if s["code"] != 0:
         raise Exception("Failed to refresh database: {0}".format(s["stderr"]))
 
@@ -26,14 +27,14 @@ def upgrade(packages=[]):
     if packages:
         install(packages)
     else:
-        s = pacman("-Su")
+        s = yay("-Su")
     if s["code"] != 0:
         raise Exception("Failed to upgrade packages: {0}".format(s["stderr"]))
 
 
 def remove(packages, purge=False):
     # Remove package(s), purge its files if requested
-    s = pacman("-Rc{0}".format("n" if purge else ""), packages)
+    s = yay("-Rc{0}".format("n" if purge else ""), packages)
     if s["code"] != 0:
         raise Exception("Failed to remove: {0}".format(s["stderr"]))
 
@@ -41,7 +42,7 @@ def remove(packages, purge=False):
 def get_all():
     # List all packages, installed and not installed
     interim, results = {}, []
-    s = pacman("-Q")
+    s = yay("-Q")
     if s["code"] != 0:
         raise Exception(
             "Failed to get installed list: {0}".format(s["stderr"])
@@ -54,7 +55,7 @@ def get_all():
             "id": x[0], "version": x[1], "upgradable": False,
             "installed": True
         }
-    s = pacman("-Sl")
+    s = yay("-Sl")
     if s["code"] != 0:
         raise Exception(
             "Failed to get available list: {0}".format(s["stderr"])
@@ -80,7 +81,7 @@ def get_all():
 def get_installed():
     # List all installed packages
     interim = {}
-    s = pacman("-Q")
+    s = yay("-Q")
     if s["code"] != 0:
         raise Exception(
             "Failed to get installed list: {0}".format(s["stderr"])
@@ -93,7 +94,7 @@ def get_installed():
             "id": x[0], "version": x[1], "upgradable": False,
             "installed": True
         }
-    s = pacman("-Qu")
+    s = yay("-Qu")
     if s["code"] != 0 and s["stderr"]:
         raise Exception(
             "Failed to get upgradable list: {0}".format(s["stderr"])
@@ -116,7 +117,7 @@ def get_installed():
 def get_available():
     # List all available packages
     results = []
-    s = pacman("-Sl")
+    s = yay("-Sl")
     if s["code"] != 0:
         raise Exception(
             "Failed to get available list: {0}".format(s["stderr"])
@@ -132,7 +133,7 @@ def get_available():
 def get_info(package):
     # Get package information from database
     interim = []
-    s = pacman("-Qi" if is_installed(package) else "-Si", package)
+    s = yay("-Qi" if is_installed(package) else "-Si", package)
     if s["code"] != 0:
         raise Exception("Failed to get info: {0}".format(s["stderr"]))
     for x in s["stdout"].split('\n'):
@@ -153,7 +154,7 @@ def get_info(package):
 
 def needs_for(packages):
     # Get list of not-yet-installed dependencies of these packages
-    s = pacman("-Sp", packages, ["--print-format", "%n"])
+    s = yay("-Sp", packages, ["--print-format", "%n"])
     if s["code"] != 0:
         raise Exception("Failed to get requirements: {0}".format(s["stderr"]))
     return [x for x in s["stdout"].split('\n') if x]
@@ -161,7 +162,7 @@ def needs_for(packages):
 
 def depends_for(packages):
     # Get list of installed packages that depend on these
-    s = pacman("-Rpc", packages, ["--print-format", "%n"])
+    s = yay("-Rpc", packages, ["--print-format", "%n"])
     if s["code"] != 0:
         raise Exception("Failed to get depends: {0}".format(s["stderr"]))
     return [x for x in s["stdout"].split('\n') if x]
@@ -169,18 +170,18 @@ def depends_for(packages):
 
 def is_installed(package):
     # Return True if the specified package is installed
-    return pacman("-Q", package)["code"] == 0
+    return yay("-Q", package)["code"] == 0
 
 
-def pacman(flags, pkgs=[], eflgs=[]):
+def yay(flags, pkgs=[], eflgs=[]):
     # Subprocess wrapper, get all data
     if not pkgs:
-        cmd = ["pacman", "--noconfirm", flags]
+        cmd = ["yay", "--noconfirm", flags]
     elif type(pkgs) == list:
-        cmd = ["pacman", "--noconfirm", flags]
+        cmd = ["yay", "--noconfirm", flags]
         cmd += [quote(s) for s in pkgs]
     else:
-        cmd = ["pacman", "--noconfirm", flags, pkgs]
+        cmd = ["yay", "--noconfirm", flags, pkgs]
     if eflgs and any(eflgs):
         eflgs = [x for x in eflgs if x]
         cmd += eflgs
